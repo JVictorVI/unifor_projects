@@ -41,15 +41,6 @@ class Grafo {
         return novoVertice;
     }
 
-    public Vertice buscarVerticePorNome(String nome) {
-        for (Vertice vertice : vertices) {
-            if (vertice.nome.equals(nome)) {
-                return vertice;
-            }
-        }
-        return null;
-    }
-
     public void adicionarAresta(String origem, String destino) {
         Vertice vOrigem = buscarOuCriarVertice(origem);
         Vertice vDestino = buscarOuCriarVertice(destino);
@@ -58,45 +49,63 @@ class Grafo {
 
     public List<List<Vertice>> encontrarComponentesFortementeConectados() {
 
+        // Pilha para armazenar a ordem de finalização dos vértices na primeira DFS.
         Stack<Vertice> pilha = new Stack<>();
+    
+        // Lista para marcar quais vértices já foram visitados.
         List<Vertice> visitado = new ArrayList<>();
-
+    
         System.out.println("Primeira Etapa do Kosaraju - DFS\n");
-        
+    
+        // Etapa 1: Realiza uma DFS no grafo original para preencher a pilha
+        // com os vértices em ordem de término (últimos visitados no topo).
         for (Vertice vertice : vertices) {
             if (!visitado.contains(vertice)) {
-                dfs(vertice, visitado, pilha);
+                dfs(vertice, visitado, pilha); // DFS padrão
             }
         }
-
+    
         System.out.println("\nPilha após a DFS: " + pilha);
-
+    
         System.out.println("\nSegunda Etapa do Kosaraju - Criando Transposta do Grafo\n");
+    
+        // Etapa 2: Cria o grafo transposto (com todas as arestas invertidas).
         Grafo transposto = transporGrafo();
         transposto.printGrafo();
-        
+    
+        // Limpa a lista de visitados para reutilizar na segunda DFS.
         visitado.clear();
+    
+        // Lista de componentes fortemente conectados (cada componente é uma lista de vértices).
         List<List<Vertice>> componentes_fortemente_conexos = new ArrayList<>();
-
+    
         System.out.println("\nTerceira Etapa do Kosaraju - DFS no Grafo Transposto\n");
-
-        // Enquanto a pilha não estiver vazia, continue processando os vértices.
+    
+        // Etapa 3: Realiza uma nova DFS no grafo transposto, seguindo a ordem da pilha.
+        // Cada DFS completa aqui corresponde a um componente fortemente conectado.
         while (!pilha.isEmpty()) {
-            
+    
+            // Recupera o vértice correspondente no grafo transposto (pelos nomes).
             Vertice vertice = transposto.buscarVerticePorNome(pilha.pop().nome);
             System.out.println("Visitando " + vertice.nome + " na transposta");
-            
-            // Se o vértice ainda não foi visitado, inicia uma nova DFS.
-            // Isso significa que encontramos um novo componente fortemente conectado.
+    
+            // Se o vértice ainda não foi visitado nesta DFS...
             if (!visitado.contains(vertice)) {
+                // Cria uma nova lista para armazenar os vértices do componente atual.
                 List<Vertice> componente = new ArrayList<>();
+    
+                // Realiza a DFS no grafo transposto e preenche o componente.
                 dfsCriarComponente(vertice, visitado, componente);
+    
+                // Adiciona o componente à lista de componentes encontrados.
                 componentes_fortemente_conexos.add(componente);   
             }
         }
-
+    
+        // Retorna todos os componentes fortemente conectados encontrados.
         return componentes_fortemente_conexos;
     }
+    
 
     private void dfs(Vertice vertice, List<Vertice> visitado, Stack<Vertice> pilha) {
         
@@ -114,22 +123,24 @@ class Grafo {
     }
 
     private void dfsCriarComponente(Vertice vertice, List<Vertice> visitado, List<Vertice> componente) {
-        
-        // Marca o vértice atual como visitado para não visitá-lo novamente
+    
+        // Marca o vértice atual como visitado para não revisitar.
         visitado.add(vertice);
-        // Adiciona o vértice atual ao componente atual (grupo).
+    
+        // Adiciona o vértice ao componente fortemente conectado atual.
         componente.add(vertice);
-
-        // Percorre os vizinhos do vértice atual no grafo transposto.
+    
+        // Percorre todos os vizinhos do vértice no grafo transposto.
         for (Vertice vizinho : vertice.vizinhos) {
-            // Só visita vizinhos que ainda não foram visitados.
+            
+            // Visita apenas os vértices que ainda não foram visitados.
             if (!visitado.contains(vizinho)) {
-                // Chama a função recursivamente para o vizinho.
+                // Chamada recursiva para explorar todo o componente.
                 dfsCriarComponente(vizinho, visitado, componente);
             }
         }        
-        
     }
+    
 
     private Grafo transporGrafo() {
         Grafo transposto = new Grafo();
@@ -156,6 +167,15 @@ class Grafo {
         }
     
     }
+
+    public Vertice buscarVerticePorNome(String nome) {
+        for (Vertice vertice : vertices) {
+            if (vertice.nome.equals(nome)) {
+                return vertice;
+            }
+        }
+        return null;
+    }
 }
 
 public class ClustersInstagram {
@@ -174,7 +194,7 @@ public class ClustersInstagram {
 
         g.adicionarAresta("Gustavo", "Felipe");
         g.adicionarAresta("Helena", "Gustavo");
-        
+
         System.out.println("Grafo inicial: \n");
         g.printGrafo();
         System.out.println();
