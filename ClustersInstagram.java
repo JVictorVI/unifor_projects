@@ -41,6 +41,15 @@ class Grafo {
         return novoVertice;
     }
 
+    public Vertice buscarVerticePorNome(String nome) {
+        for (Vertice vertice : vertices) {
+            if (vertice.nome.equals(nome)) {
+                return vertice;
+            }
+        }
+        return null;
+    }
+
     public void adicionarAresta(String origem, String destino) {
         Vertice vOrigem = buscarOuCriarVertice(origem);
         Vertice vDestino = buscarOuCriarVertice(destino);
@@ -146,15 +155,6 @@ class Grafo {
             System.out.println();
         }
     
-    }
-
-    public Vertice buscarVerticePorNome(String nome) {
-        for (Vertice vertice : vertices) {
-            if (vertice.nome.equals(nome)) {
-                return vertice;
-            }
-        }
-        return null;
     }
 }
 
