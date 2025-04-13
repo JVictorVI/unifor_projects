@@ -1,5 +1,5 @@
 import Config
 
 config :nostrum,
-  token: "MTM1NjM5OTE3MDkyNzQ2MDU5Mw.GqlVXs.06XHgt9zfHKZcvuVby9WYe2rnv7DfUUWu0fyAU",
+  token: "<DISCORD_BOT_TOKEN>",
   gateway_intents: :all
