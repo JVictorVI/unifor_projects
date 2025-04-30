@@ -21,7 +21,7 @@ defmodule KojimaBot.CurrencyService do
     result = HTTP.get("https://api.frankfurter.dev/v1/currencies")
     case result do
       {:ok, response} ->
-        case JSON.decode(response.body) do
+        case Jason.decode(response.body) do
           {:ok, json} ->
 
             %Container{}
@@ -87,7 +87,7 @@ defmodule KojimaBot.CurrencyService do
           _ ->
             embed =
               %Container{}
-              |> Container.put_title("Erro")
+              |> Container.put_title("Erro ao consultar câmbios")
               |> Container.put_color(0xFF0000)
               |> Container.put_description("Erro ao interpretar a resposta da API.")
               |> Container.put_footer("Tente novamente mais tarde.")
@@ -95,7 +95,7 @@ defmodule KojimaBot.CurrencyService do
 
       {:error, _} ->
         embed = %Container{}
-          |> Container.put_title("Erro")
+          |> Container.put_title("Erro ao consultar câmbios")
           |> Container.put_color(0xFF0000)
           |> Container.put_description("Erro ao consultar a API Frankfurter.")
           |> Container.put_footer("Tente novamente mais tarde.")

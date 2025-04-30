@@ -9,6 +9,9 @@ defmodule KojimaBot do
   alias KojimaBot.GameService
   alias KojimaBot.WeatherService
   alias KojimaBot.CurrencyService
+  alias KojimaBot.HolidaysService
+  alias KojimaBot.DeepseekService
+  alias KojimaBot.GeminiService
 
   alias Nostrum.Struct.Embed, as: Container
   alias HTTPoison, as: HTTP
@@ -24,11 +27,6 @@ defmodule KojimaBot do
             comandos disponíveis!",
             color: 0x0074E7,
             fields: [
-              %{
-                name: "!cep <valor_do_cep>",
-                value: "Use este para receber informações sobre o CEP.",
-                inline: true
-              },
               %{
                 name: "!game <nome_do_jogo>",
                 value: "Use este para receber informações sobre um jogo.",
@@ -48,6 +46,11 @@ defmodule KojimaBot do
                 name: "!moedas",
                 value: "Use este para receber informações sobre todas as moedas disponíveis para conversão.",
                 inline: true
+              },
+              %{
+                name: "!feriados <uf> <ano>",
+                value: "Use este para receber informações sobre os feriados nacionais e locais.",
+                inline: true
               }
 
             ],
@@ -56,15 +59,9 @@ defmodule KojimaBot do
             }
           }
 
-          Api.create_message(msg.channel_id, %{
+          Api.Message.create(msg.channel_id, %{
             embed: embed
           })
-
-      # CEP API
-      String.starts_with?(msg.content, "!cep") ->
-        cep_value = CepService.validate_cep(msg.content)
-        cep_data = CepService.get_cep_data(cep_value)
-        Api.create_message(msg.channel_id, cep_data)
 
       # RAWG API
       String.starts_with?(msg.content, "!game") ->
@@ -72,11 +69,11 @@ defmodule KojimaBot do
 
         case game_title do
           :error ->
-            Api.create_message(msg.channel_id, "Comando inválido. Use !game <nome_do_jogo>.")
+            Api.Message.create(msg.channel_id, "Comando inválido. Use !game <nome_do_jogo>.")
 
           _ ->
             game_data = GameService.get_game_data(game_title)
-            Api.create_message(msg.channel_id, embed: game_data)
+            Api.Message.create(msg.channel_id, embed: game_data)
         end
 
 
@@ -86,11 +83,24 @@ defmodule KojimaBot do
 
         case city_name do
           :error ->
-            Api.create_message(msg.channel_id, "Comando inválido. Use !clima <nome_da_cidade>.")
+            Api.Message.create(msg.channel_id, "Comando inválido. Use !clima <nome_da_cidade>.")
 
           _ ->
-            weather_data = WeatherService.get_weather_data(city_name)
-            Api.create_message(msg.channel_id, embed: weather_data)
+            weather_data = WeatherService.get_weather_data(msg.channel_id, city_name)
+            Api.Message.create(msg.channel_id, embed: weather_data)
+        end
+
+      # Deepseek API
+      String.starts_with?(msg.content, "!deepseek") ->
+        question = DeepseekService.get_question(msg.content)
+
+        case question do
+          :error ->
+            Api.Message.create(msg.channel_id, "Comando inválido. Use !deepseek <sua_pergunta>.")
+
+          _ ->
+            response = DeepseekService.send_deepseek_message(msg.channel_id, question)
+            Api.Message.create(msg.channel_id, embed: response)
         end
 
       # Currency API
@@ -99,16 +109,40 @@ defmodule KojimaBot do
         case CurrencyService.validate_currency(msg.content) do
 
           :error ->
-            Api.create_message(msg.channel_id, "Comando inválido. Use !cambio <valor> <moeda_origem> <moeda_destino>.")
+            Api.Message.create(msg.channel_id, "Comando inválido. Use !cambio <valor> <moeda_origem> <moeda_destino>.")
 
           {value, from_currency, to_currency} ->
             currency_data = CurrencyService.get_currency_data(value, from_currency, to_currency)
-            Api.create_message(msg.channel_id, embed: currency_data)
+            Api.Message.create(msg.channel_id, embed: currency_data)
         end
 
       String.starts_with?(msg.content, "!moedas") ->
         currencies = CurrencyService.get_available_currencies()
-        Api.create_message(msg.channel_id, embed: currencies)
+        Api.Message.create(msg.channel_id, embed: currencies)
+
+      # Feriados
+      String.starts_with?(msg.content, "!feriados") ->
+
+        case HolidaysService.validate_holiday(msg.content) do
+
+          :error ->
+            Api.Message.create(msg.channel_id, "Comando inválido. Use !feriados <uf> <ano>.")
+
+          {uf, year} ->
+            holiday_data = HolidaysService.get_holiday_data(uf, year)
+            Api.Message.create(msg.channel_id, embed: holiday_data)
+
+        end
+
+      #ExP
+      String.starts_with?(msg.content, "!gemini") ->
+
+        question = GeminiService.get_question(msg.content)
+        image_url = GeminiService.get_url_img(msg.attachments)
+
+        response = GeminiService.get_gemini_response(msg.channel_id, question, image_url)
+
+        Api.Message.create(msg.channel_id, "Você perguntou #{question} e mandou a imagem: #{image_url}")
 
       true ->
         :ignore

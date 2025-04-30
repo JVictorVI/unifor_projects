@@ -10,7 +10,7 @@ defmodule KojimaBot.GameService do
 
     case result do
       {:ok, response} ->
-        case JSON.decode(response.body) do
+        case Jason.decode(response.body) do
           {:ok, json} ->
             case json["results"] do
               [found_game | _] ->

@@ -1,18 +1,25 @@
 defmodule KojimaBot.WeatherService do
 
+  use Nostrum.Consumer
+  alias Nostrum.Api
+
   alias Nostrum.Struct.Embed, as: Container
   alias HTTPoison, as: HTTP
 
-  def get_weather_data(city_name) do
+  def get_weather_data(channel_id, city_name) do
 
     city_name = String.replace(city_name, " ", "%20")
 
     openweathermap_api_key = "83f116f5dfb3cc471e2dbe75a070de5d"
+
+    {:ok, message} = Api.Message.create(channel_id, "Um momento...")
+
     result = HTTP.get("https://api.openweathermap.org/data/2.5/weather?q=#{city_name}&appid=#{openweathermap_api_key}&units=metric&lang=pt_br")
 
     case result do
       {:ok, response} ->
-        case JSON.decode(response.body) do
+        Api.Message.delete(channel_id, message.id)
+        case Jason.decode(response.body) do
           {:ok, json} ->
 
             icon = json["weather"] |> List.first() |> Map.get("icon")
